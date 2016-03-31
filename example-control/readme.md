@@ -9,3 +9,5 @@ The Mean is accessable via the Hawtio console (JBoss Fuse and deploably into Kar
 The project can simple be buit and deployed either directly into the /deployment folder of Karaf (hot deploy), using the osgi:install mvn:co.uk.sussexsoftware/example-control/<vserion>  or indirectly onto a Fabric profile or via a Karaf fature file.
 
 Once deployed and started (use osgi:start <bundle-id>) the example:<commands> will be available depending on the user and ACL's that have been included.
+
+The resource folder contains two access control files for example purposes.  These should be copied to the /etc/auth folder of the Karaf container and modified as required - by default the admin role has access to all commands and the viewer has access to read only commands#
