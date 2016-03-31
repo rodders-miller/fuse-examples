@@ -1,0 +1,56 @@
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+  xmlns:cxf="http://camel.apache.org/schema/blueprint/cxf" xmlns:jaxws="http://cxf.apache.org/blueprint/jaxws" xmlns:cxfcore="http://cxf.apache.org/blueprint/core"
+  xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+    http://cxf.apache.org/blueprint/core http://cxf.apache.org/blueprint/core.xsd
+    http://cxf.apache.org/blueprint/jaxws http://cxf.apache.org/blueprint/jaxws
+    http://camel.apache.org/schema/blueprint/cxf http://camel.apache.org/schema/blueprint/cxf/camel-cxf.xsd
+    http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
+    http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint-2.10.0.xsd">
+            
+    <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
+        <command name="example/execute">
+            <action class="co.uk.sussexsoftware.command.ExecuteOperation">
+                <argument ref="worker" />
+            </action>
+            
+            <completers>
+                <ref component-id="completer"/>
+                <null/>
+            </completers>
+        </command>
+
+        <command name="example/set">
+            <action class="co.uk.sussexsoftware.command.SetValue">
+                <argument ref="worker" />
+            </action>
+        </command>
+
+        <command name="example/get">
+            <action class="co.uk.sussexsoftware.command.GetValue">
+                <argument ref="worker" />
+            </action>
+        </command>
+
+    </command-bundle>
+    
+    <bean id="completer" class="co.uk.sussexsoftware.command.ExecuteOperationCompleter "/>      
+        
+    <bean id="ExampleMBean" class="co.uk.sussexsoftware.mbean.ExampleMBean">
+        <argument ref="worker" />
+    </bean>
+
+    <bean id="mbeanRegistrer" class="org.apache.karaf.management.MBeanRegistrer" init-method="init">
+        <property name="mbeans">
+            <map>
+                <entry value="co.uk.sussexsoftware:type=service,name=ExampleMBean" key-ref="ExampleMBean"/>
+            </map>
+        </property>
+    </bean>
+
+    <reference id="mbeanServer" interface="javax.management.MBeanServer">
+        <reference-listener ref="mbeanRegistrer" bind-method="registerMBeanServer" unbind-method="unregisterMBeanServer"/>
+    </reference>    
+    
+    <bean id="worker" class="co.uk.sussexsoftware.Worker"/>  
+     
+</blueprint>
