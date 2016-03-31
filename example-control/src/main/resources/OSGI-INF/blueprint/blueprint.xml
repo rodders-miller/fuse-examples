@@ -6,8 +6,15 @@
     http://camel.apache.org/schema/blueprint/cxf http://camel.apache.org/schema/blueprint/cxf/camel-cxf.xsd
     http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
     http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint-2.10.0.xsd">
-            
+         
+    
+    <!-- Each command is registred with the command-bundle and the command will be 
+         example:execute etc. in the console and accessable to users with the
+         correct permissions set in the /etc/auth folder
+    -->   
     <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
+        
+        <!-- note that the execute command also has a command completer associated with it -->
         <command name="example/execute">
             <action class="co.uk.sussexsoftware.command.ExecuteOperation">
                 <argument ref="worker" />
@@ -30,11 +37,17 @@
                 <argument ref="worker" />
             </action>
         </command>
-
+        
+        <command name="example/print-table">
+            <action class="co.uk.sussexsoftware.command.PrintTable">
+            </action>
+        </command>
+        
     </command-bundle>
     
     <bean id="completer" class="co.uk.sussexsoftware.command.ExecuteOperationCompleter "/>      
         
+    <!-- The Example MBean and the associated registartion into the MBean Server -->
     <bean id="ExampleMBean" class="co.uk.sussexsoftware.mbean.ExampleMBean">
         <argument ref="worker" />
     </bean>
@@ -51,6 +64,7 @@
         <reference-listener ref="mbeanRegistrer" bind-method="registerMBeanServer" unbind-method="unregisterMBeanServer"/>
     </reference>    
     
+    <!-- The Worker that is delegated to from the MBean and the Commands -->
     <bean id="worker" class="co.uk.sussexsoftware.Worker"/>  
      
 </blueprint>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Home Office.
+ * Copyright 2016 Sussex Software.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import org.apache.karaf.shell.console.completer.StringsCompleter;
 
 /**
  *
+ *  An example command completer that completes the strings for the 
+ *  user of the command as required
+ *
  * @author rodm
  */
 public class ExecuteOperationCompleter implements Completer {
@@ -29,6 +32,7 @@ public class ExecuteOperationCompleter implements Completer {
 * @param buffer it's the beginning string typed by the user
 * @param cursor it's the position of the cursor
 * @param candidates the list of completions proposed to the user
+     * @return 
 */
  @Override
  public int complete(String buffer, int cursor, List candidates) {

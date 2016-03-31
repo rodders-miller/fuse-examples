@@ -9,23 +9,37 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
                 
-	<properties>
-			<redhat-version>redhat-620133</redhat-version>
-			<karaf-version>2.4.0.${redhat-version}</karaf-version>
-			<log4j-version>1.2.17</log4j-version>
-	</properties>
+    <properties> 
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <redhat-version>redhat-620133</redhat-version>
+        <karaf-version>2.4.0.${redhat-version}</karaf-version>
+        <karaf-table-version>3.0.6</karaf-table-version>
+        <log4j-version>1.2.17</log4j-version>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.karaf.shell</groupId>
-			<artifactId>org.apache.karaf.shell.console</artifactId>
-			<version>${karaf-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>${log4j-version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
+            <version>${karaf-version}</version>
+        </dependency>
+        
+        <!--  Karaf Shell Table is a usefull utility class to print nice tables 
+              in the console.  This utility class was introduced in version 3 of
+              Karaf and so a later version of the bundle is required, but is compatable 
+              with Karaf version 2.4
+        -->
+        
+        <dependency>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.table</artifactId>
+            <version>${karaf-table-version}</version>
+        </dependency>              
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j-version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-core</artifactId>
@@ -39,18 +53,18 @@
     </dependencies>
 
     <build>
-    <plugins>
-        <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <version>2.3.4</version>
-            <extensions>true</extensions>
-            <configuration>
-                <instructions>
-                    <manifestLocation>./target/META-INF</manifestLocation>
-                </instructions>
-            </configuration>
-        </plugin>
-    </plugins>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.4</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <manifestLocation>./target/META-INF</manifestLocation>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
