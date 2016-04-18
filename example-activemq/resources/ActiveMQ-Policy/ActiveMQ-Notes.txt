@@ -1,0 +1,91 @@
+1.)  ActiveMQ.xml is stored in the /etc folder of Fuse
+
+2.) The configuration of the ActiveMQ broker is controlled by the org.springframework.beans.factory.config.PropertyPlaceholderConfigurer
+which loads its configuration via the io.fabric8.mq.fabric.ConfigurationProperties class
+
+3.) The io.fabric8.mq.fabric.ConfigurationProperties class loads its properties from io.fabric8.mq.fabric.server-broker.cfg on a standalone node
+
+4.) The broker is crated by the ActiveMQServiceFactory.java, which creates the broker with the properties that it is passed to - these in the sandalone example
+come from (by default?) the io.fabric8.mq.fabric.server-broker.cfg.   
+
+5.) Therefore the additional properties can be populated into the io.fabric8.mq.fabric.server-broker.cfg file as required
+
+---- Queue level ------
+
+See for fall details of what is needed here:
+
+http://activemq.apache.org/per-destination-policies.html
+
+- Producer-Flow-Control
+This holds up the producer and prevents too much memory being consumed by each of the queues.   There should be sufficient memory in each queue for the destination
+and consumer (for the size of the messages), but using store-based cursor the disk will be used for the messages and there will be an pending cursor.  However, when the memory limits get reached 
+an exception should be raised instead (see the broker configuration).
+
+Using no queue based memory limit (as deligating to the main memory) - the producer flow control should not have an effect on the 
+
+- storeUseageHigWaterMark
+- cursorMemoryHighWaterMark
+
+These should be set to a percentage of the overall store and memory usage - setting these to be the same percentage would make sence here.
+
+
+- MemoryLimit
+This is the amount of memory available for a particular queue.  When using the 'Store Cursor'  this will amount of memory required for 'in flight messages and the pending cursor'
+It would seem sensible to 
+
+
+---- Broker Level ------
+
+- Block to fail when limit is reached (Controls the Storage limit)
+  sendFailIfNoSpaceAfterTimeout=xxxxx
+
+- Memory Limit
+
+The total JVM memory space available for the queues etc.
+
+- Storage Limit
+
+The total disk-space available for the persistent queues
+
+
+- Temp Limit
+
+The tempory disk space used by topics and non peristent queues when the queues memory limit is reached
+
+--- Memory Cursoy ----
+Controls how and where the references to the queues data is held
+
+1.) VM
+2.) file
+3.) store - the default is a store based cursor
+
+A store cursor is used when the consumers do not keep up (when keeping up the messages are dispatched directly from the message store)
+VM is legacy has its ability to handle very slow consumers is compromised as it always uses the pending cursor
+file-based is good for bursty consumers of messages - it is based on VM, but pages the cursors to disk when fall
+ 
+
+Conclusion:
+
+1.  the broker policy should have sendFailIfNoSpaceAfterTimeout=1000 (allow for 1 second for memory to free)
+2.  the broker policy should have the store and memory limit set approximately from configuration (store should be XGB and memory limit as a percentage of the JVM
+3.  each destination should have both storeUseageHigWaterMark and cursorMemoryHighWaterMark set depending on the demands of the particular queue
+4.  producer flow control should be set - but for persistent queues this should not matter
+5.  destinations shall be configured on start up (for monitoring purposes using the http://activemq.apache.org/configure-startup-destinations.html)
+6.  need to ensure the correct settings are added for prioritisation for the destination  <policyEntry queue=">" prioritizedMessages="true"/>
+7.  the location of the data directory should be configured
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

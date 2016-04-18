@@ -1,0 +1,64 @@
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+  xmlns:cxf="http://camel.apache.org/schema/blueprint/cxf" xmlns:jaxws="http://cxf.apache.org/blueprint/jaxws" xmlns:cxfcore="http://cxf.apache.org/blueprint/core"
+  xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+    http://cxf.apache.org/blueprint/core http://cxf.apache.org/blueprint/core.xsd
+    http://cxf.apache.org/blueprint/jaxws http://cxf.apache.org/blueprint/jaxws
+    http://camel.apache.org/schema/blueprint/cxf http://camel.apache.org/schema/blueprint/cxf/camel-cxf.xsd
+    http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
+    http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint-2.10.0.xsd">
+    
+    <!--
+	Properties that can be set in a .cfg file named
+	If that file does not exist, the default values here are used.
+	-->
+    
+	<cm:property-placeholder
+		persistent-id="co.uk.sussexsoftware.activemq.example"
+		update-strategy="reload">
+		<cm:default-properties>
+            <cm:property name="JMSBrokerURL" value="tcp://localhost:61616" />
+			<cm:property name="JMSUserName" value="admin" />
+			<cm:property name="JMSPassword" value="admin" />
+            <cm:property name="JMSBrokerPoolConnections" value="10" />
+            <cm:property name="InputFileName" value="/input" />
+            <cm:property name="TestQueueName" value="TEST" />
+	
+		</cm:default-properties>
+	</cm:property-placeholder>
+
+        <!-- setup JMS connection factory -->
+        <bean id="poolConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory">
+            <property name="maxConnections" value="${JMSBrokerPoolConnections}"/>
+            <property name="connectionFactory" ref="jmsConnectionFactory"/>
+        </bean>
+ 
+        <bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+            <property name="brokerURL" value="${JMSBrokerURL}"/>
+            <property name="userName" value="${JMSUserName}" />
+            <property name="password" value="${JMSPassword}" />    
+        </bean>
+ 
+        <!-- define our activemq component -->
+        <bean id="mq" class="org.apache.activemq.camel.component.ActiveMQComponent">
+            <property name="connectionFactory" ref="poolConnectionFactory"/>
+          
+             <!-- if we are using transacted then enable CACHE_CONSUMER (if not using XA) to run faster
+             see more details at: http://camel.apache.org/jms -->
+            <property name="cacheLevelName" value="CACHE_CONSUMER" />
+     
+        </bean>
+
+		
+	<!-- Simple camel context that checks the capacity of the queue by sending messages to the queue named -->	
+	<camelContext xmlns="http://camel.apache.org/schema/blueprint" xmlns:order="http://fabric8.com/examples/order/v7"
+        id="jms-context">
+
+        <route id="test-queue-capacity">
+            <from uri="file:{{InputFileName}}" />
+            <log message="Receiving order ${file:name}" />
+            <to uri="mq:{{TestQueueName}}" />
+        </route>
+
+    </camelContext>
+
+</blueprint>
