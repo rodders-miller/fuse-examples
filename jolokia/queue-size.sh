@@ -13,7 +13,7 @@ if [ -z "$1" ]
 fi
 
 HOST_AND_PORT='localhost:9090'
-BROKER_NAME='ssb-broker'
+BROKER_NAME='broker'
 QUEUE_NAME=$1
 echo "Reading queue depth from host and port ${HOST_AND_PORT} broker ${BROKER_NAME} and ${QUEUE_NAME}"
 
