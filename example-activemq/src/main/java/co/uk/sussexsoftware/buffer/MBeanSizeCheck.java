@@ -34,6 +34,9 @@ public class MBeanSizeCheck implements ManagedService {
     
     /**
      *
+     *  Note:  this class uses the Mbean server within Karaf, which has an MBean guard requiring RBAC
+     *  Therefore to access from with the process the MBean must be white listed in \auth\jmx.acl.whiitelist.cfg
+     * 
      * @param mBeanServer
      * @param amqBrokerName
      */
@@ -51,7 +54,7 @@ public class MBeanSizeCheck implements ManagedService {
     }
     
     /**
-     *
+     * 
      * @param bufferName
      * @return
      * @throws Exception
