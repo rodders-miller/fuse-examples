@@ -36,7 +36,8 @@
               <policyEntries>
 
 			  <!-- All queues have flow control enabled and have a DLQ - the DQL should always remain empty, but to trap corner cases they are enabled here -->
-			  <policyEntry queue=">"  producerFlowControl="true" >
+			  <policyEntry queue=">"  producerFlowControl="true" >	  
+			  
 					<deadLetterStrategy>
 						<!--
 						Use the prefix 'dlq.' for the destination name, and make
@@ -44,30 +45,20 @@
 						Note:  individual DLQ strategy overrides the shared and will default values such as processNonPersistent="true"
 						-->
 						<individualDeadLetterStrategy queuePrefix="dlq." useQueueForQueueMessages="true"  processNonPersistent="true" />
+						
+			           <!-- 
+						Tell the dead letter strategy not to process expired messages
+						so that they will just be discarded instead of being sent to
+						the DLQ 
+						-->						
+						<sharedDeadLetterStrategy processExpired="false" />
+								
 					</deadLetterStrategy>  
 			  </policyEntry>
 			 
-				<!-- Policy entries for inbound and outbound queues with percentage of the total disk and memory availability set
-				     The percentages should be a relative portion of the overall space based on relative usage of that queue
-					 all inbound and outbound queue have prioritized messages turned on 
-				-->
-				<policyEntry queue="inbound.>" prioritizedMessages="true"  />
-                <policyEntry queue="inbound.TEST1" storeUsageHighWaterMark="${inbound.percentage.TEST1}"  cursorMemoryHighWaterMark="${inbound.percentage.TEST1}" />
-				<policyEntry queue="inbound.TEST2" storeUsageHighWaterMark="${inbound.percentage.TEST2}"  cursorMemoryHighWaterMark="${inbound.percentage.TEST2}" />
-				<policyEntry queue="inbound.TEST3" storeUsageHighWaterMark="${inbound.percentage.TEST3}"  cursorMemoryHighWaterMark="${inbound.percentage.TEST3}" />
-
+				<!-- Policy entries for inbound and outbound queues with prioritizedMessage set -->
+				<policyEntry queue="inbound.>"  prioritizedMessages="true" storeUsageHighWaterMark="${inbound.high-water-mark}"  />
 				<policyEntry queue="outbound.>" prioritizedMessages="true" />
-                <policyEntry queue="outbound.TEST1" storeUsageHighWaterMark="${outbound.percentage.TEST1}"  cursorMemoryHighWaterMark="${outbound.percentage.TEST1}" />
-				<policyEntry queue="outbound.TEST2" storeUsageHighWaterMark="${outbound.percentage.TEST2}"  cursorMemoryHighWaterMark="${outbound.percentage.TEST2}" />
-				<policyEntry queue="outbound.TEST3" storeUsageHighWaterMark="${outbound.percentage.TEST3}"  cursorMemoryHighWaterMark="${outbound.percentage.TEST3}" />
-				<policyEntry queue="outbound.TEST4" storeUsageHighWaterMark="${outbound.percentage.TEST4}"  cursorMemoryHighWaterMark="${outbound.percentage.TEST4}" />
-
-				<!-- Policy entries for the audit queues, note that the data covers the request and responses
-					 The percentages should be a relative portion of the overall space based on relative usage of that queue 
-				-->
-				<policyEntry queue="audit.events" storeUsageHighWaterMark="${audit.events.percentage}"  cursorMemoryHighWaterMark="${audit.events.percentage}" />
-				<policyEntry queue="audit.data.>" storeUsageHighWaterMark="${audit.data.percentage}"  cursorMemoryHighWaterMark="${audit.data.percentage}" />
-				
 				
               </policyEntries>
             </policyMap>
@@ -98,6 +89,7 @@
                 </authorizationMap>
               </map>
             </authorizationPlugin>
+			<statisticsBrokerPlugin/>
         </plugins>
 
         <systemUsage>
@@ -115,7 +107,7 @@
 				
 				<!-- temp usage not utilised as we are only considering persistent messages -->
                 <tempUsage>
-                    <tempUsage limit="50mb"/>
+                    <tempUsage limit="32mb"/>
                 </tempUsage>
             </systemUsage>
         </systemUsage>
@@ -136,7 +128,8 @@
 				<queue physicalName="outbound.TEST4" />
 				<queue physicalName="audit.data.request" />
 				<queue physicalName="audit.data.response" />
-				<queue physicalName="audit.data.event" />	
+				<queue physicalName="audit.data.event" />
+				<queue physicalName="secured" />
 		</destinations>
 		
     </broker>

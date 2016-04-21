@@ -1,6 +1,6 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
-  xmlns:cxf="http://camel.apache.org/schema/blueprint/cxf" xmlns:jaxws="http://cxf.apache.org/blueprint/jaxws" xmlns:cxfcore="http://cxf.apache.org/blueprint/core"
-  xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+           xmlns:cxf="http://camel.apache.org/schema/blueprint/cxf" xmlns:jaxws="http://cxf.apache.org/blueprint/jaxws" xmlns:cxfcore="http://cxf.apache.org/blueprint/core"
+           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
     http://cxf.apache.org/blueprint/core http://cxf.apache.org/blueprint/core.xsd
     http://cxf.apache.org/blueprint/jaxws http://cxf.apache.org/blueprint/jaxws
     http://camel.apache.org/schema/blueprint/cxf http://camel.apache.org/schema/blueprint/cxf/camel-cxf.xsd
@@ -8,57 +8,112 @@
     http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint-2.10.0.xsd">
     
     <!--
-	Properties that can be set in a .cfg file named
-	If that file does not exist, the default values here are used.
-	-->
+        Properties that can be set in a .cfg file named
+        If that file does not exist, the default values here are used.
+    -->
     
-	<cm:property-placeholder
-		persistent-id="co.uk.sussexsoftware.activemq.example"
-		update-strategy="reload">
-		<cm:default-properties>
-            <cm:property name="JMSBrokerURL" value="tcp://localhost:61616" />
-			<cm:property name="JMSUserName" value="admin" />
-			<cm:property name="JMSPassword" value="admin" />
+    <cm:property-placeholder persistent-id="co.uk.sussexsoftware.activemq.example" update-strategy="reload" >
+        <cm:default-properties>
+                    
+            <cm:property name="BrokerName" value="amq" /> 
+            
+            <!-- using the vm transport to the broker for more efficient access -->                   
+            <!--cm:property name="JMSBrokerURL" value="tcp://localhost:61616" /-->
+            <cm:property name="JMSBrokerURL" value="vm://amq" />
+            <cm:property name="JMSUserName" value="admin" />
+            <cm:property name="JMSPassword" value="admin" />
             <cm:property name="JMSBrokerPoolConnections" value="10" />
-            <cm:property name="InputFileName" value="/input" />
+            <cm:property name="InputFileName" value="input" />
             <cm:property name="TestQueueName" value="TEST" />
 	
-		</cm:default-properties>
-	</cm:property-placeholder>
+        </cm:default-properties>
+    </cm:property-placeholder>
 
-        <!-- setup JMS connection factory -->
-        <bean id="poolConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory">
-            <property name="maxConnections" value="${JMSBrokerPoolConnections}"/>
-            <property name="connectionFactory" ref="jmsConnectionFactory"/>
-        </bean>
+    <!-- setup JMS connection factory -->
+    <bean id="poolConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory">
+        <property name="maxConnections" value="${JMSBrokerPoolConnections}"/>
+        <property name="connectionFactory" ref="jmsConnectionFactory"/>
+    </bean>
  
-        <bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
-            <property name="brokerURL" value="${JMSBrokerURL}"/>
-            <property name="userName" value="${JMSUserName}" />
-            <property name="password" value="${JMSPassword}" />    
-        </bean>
+    <bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="${JMSBrokerURL}"/>
+        <property name="userName" value="${JMSUserName}" />
+        <property name="password" value="${JMSPassword}" />    
+    </bean>
  
-        <!-- define our activemq component -->
-        <bean id="mq" class="org.apache.activemq.camel.component.ActiveMQComponent">
-            <property name="connectionFactory" ref="poolConnectionFactory"/>
+    <!-- define our activemq component -->
+    <bean id="mq" class="org.apache.activemq.camel.component.ActiveMQComponent">
+        <property name="connectionFactory" ref="poolConnectionFactory"/>
           
-             <!-- if we are using transacted then enable CACHE_CONSUMER (if not using XA) to run faster
-             see more details at: http://camel.apache.org/jms -->
-            <property name="cacheLevelName" value="CACHE_CONSUMER" />
+        <!-- if we are using transacted then enable CACHE_CONSUMER (if not using XA) to run faster
+        see more details at: http://camel.apache.org/jms -->
+        <property name="cacheLevelName" value="CACHE_CONSUMER" />
      
-        </bean>
+    </bean>
 
-		
-	<!-- Simple camel context that checks the capacity of the queue by sending messages to the queue named -->	
-	<camelContext xmlns="http://camel.apache.org/schema/blueprint" xmlns:order="http://fabric8.com/examples/order/v7"
-        id="jms-context">
 
+    <!-- Each command is registred with the command-bundle and the command will be 
+         example:execute etc. in the console and accessable to users with the
+         correct permissions set in the /etc/auth folder
+    -->   
+    <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
+        
+        <!-- note that the execute command also has a command completer associated with it -->
+        <command name="buffering/size-check">
+            <action class="co.uk.sussexsoftware.command.SizeCheckOperation">
+                <argument ref="jmsConnectionFactory" />
+            </action>
+        </command>
+        
+        <command name="buffering/mbean-size-check">
+            <action class="co.uk.sussexsoftware.command.MBeanSizeCheckOperation">
+                <argument ref="mbeanServer" />
+            </action>
+        </command>
+        
+        <command name="buffering/is-buffer-full">
+            <action class="co.uk.sussexsoftware.command.IsBufferFullOperation">
+                <argument ref="bufferSizeCheck" />
+            </action>
+        </command>
+        
+    </command-bundle>
+
+
+    <!-- buffer size check is used to determine if the buffer has exceeded the size check lmit -->
+    <bean id="bufferSizeCheck" class="co.uk.sussexsoftware.buffer.MBeanSizeCheck">
+        <argument  ref="mbeanServer" /> 
+        <argument  value="${BrokerName}"/>  
+    </bean> 
+
+    <!-- Managed service interface used to load properties via the config admin service 
+    here the service property 'service.pid' determines the property set used      -->
+    <service ref="bufferSizeCheck" auto-export="all-classes"  >
+        <service-properties>
+            <entry key="service.pid" value="co.uk.sussexsoftware.activemq.buffersize" />
+        </service-properties>     
+    </service>
+ 
+    <!-- reference to the platfroms mbean server that is used by the buffer check services etc -->
+    <reference id="mbeanServer" interface="javax.management.MBeanServer"/>
+                                            	
+    <!-- Simple camel context that checks the capacity of the queue by sending messages to the queue named -->	
+    <camelContext xmlns="http://camel.apache.org/schema/blueprint" xmlns:order="http://fabric8.com/examples/order/v7"  id="jms-context">
         <route id="test-queue-capacity">
             <from uri="file:{{InputFileName}}" />
-            <log message="Receiving order ${file:name}" />
-            <to uri="mq:{{TestQueueName}}" />
+            <log message="Processing file ${file:name}" />
+            <choice>
+                <when>
+                    <!-- using the TestQueueName property to determine which queue is beign used here -->
+                    <method ref="bufferSizeCheck" method="isBufferFull(${properties-location:TestQueueName})" />
+                    <log message="buffer is full can not accept the file"/>
+                </when>
+                <otherwise>
+                    <log message="buffer is not full and so accepting the file"/>
+                    <to uri="mq:{{TestQueueName}}" /> 
+                </otherwise>
+            </choice>
         </route>
-
     </camelContext>
 
 </blueprint>
