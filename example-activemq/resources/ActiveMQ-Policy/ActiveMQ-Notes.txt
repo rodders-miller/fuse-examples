@@ -27,7 +27,8 @@ Using no queue based memory limit (as deligating to the main memory) - the produ
 - cursorMemoryHighWaterMark
 
 These should be set to a percentage of the overall store and memory usage - setting these to be the same percentage would make sence here.
-
+This will limit the use of the queue to when the overall store reaches this level.  It will not partition a section of the space
+only for that queue
 
 - MemoryLimit
 This is the amount of memory available for a particular queue.  When using the 'Store Cursor'  this will amount of memory required for 'in flight messages and the pending cursor'
@@ -63,12 +64,16 @@ A store cursor is used when the consumers do not keep up (when keeping up the me
 VM is legacy has its ability to handle very slow consumers is compromised as it always uses the pending cursor
 file-based is good for bursty consumers of messages - it is based on VM, but pages the cursors to disk when fall
  
+6.) Each queue reports the number of messages that are waiting in the queue to be processed - this can be retrived from the platfomrs
+MBeanServer if the broker is local or via the JMX interface / Jolokia.  The size can be calculated apporximiately by using the average message
+size and the length of the buffer.  However,  the average message size is lost on restart.
+
 
 Conclusion:
 
 1.  the broker policy should have sendFailIfNoSpaceAfterTimeout=1000 (allow for 1 second for memory to free)
 2.  the broker policy should have the store and memory limit set approximately from configuration (store should be XGB and memory limit as a percentage of the JVM
-3.  each destination should have both storeUseageHigWaterMark and cursorMemoryHighWaterMark set depending on the demands of the particular queue
+3.  each queue shall be checked for the size of the queue before sending to it to ensure the buffers do not become over fall
 4.  producer flow control should be set - but for persistent queues this should not matter
 5.  destinations shall be configured on start up (for monitoring purposes using the http://activemq.apache.org/configure-startup-destinations.html)
 6.  need to ensure the correct settings are added for prioritisation for the destination  <policyEntry queue=">" prioritizedMessages="true"/>
